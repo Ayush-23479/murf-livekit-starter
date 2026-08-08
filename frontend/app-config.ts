@@ -33,9 +33,10 @@ export interface AppConfig {
 }
 
 export const APP_CONFIG_DEFAULTS: AppConfig = {
-  companyName: 'Murf AI',
-  pageTitle: 'Voice Agent Starter',
-  pageDescription: 'A voice agent powered by Murf Falcon — the fastest TTS API',
+  companyName: 'Ava Finance',
+  pageTitle: 'Ava — Your Financial Support Voice Assistant',
+  pageDescription:
+    'Talk to Ava about your account, billing, and subscriptions — powered by Murf Falcon, the fastest TTS API',
 
   supportsChatInput: true,
   supportsVideoInput: true,
@@ -43,26 +44,16 @@ export const APP_CONFIG_DEFAULTS: AppConfig = {
   isPreConnectBufferEnabled: true,
 
   logo: '/murf-logo.svg',
-  accent: '#6366F1',
+  accent: '#0F766E',
   logoDark: '/murf-logo-dark.svg',
-  accentDark: '#818cf8',
-  startButtonText: 'Start talking',
+  accentDark: '#2DD4BF',
+  startButtonText: 'Talk to Ava',
 
-  // optional: audio visualization configuration
-  // audioVisualizerType: 'bar',
-  // audioVisualizerColor: '#002cf2',
-  // audioVisualizerColorDark: '#1fd5f9',
-  // audioVisualizerColorShift: 0.3,
-  // audioVisualizerBarCount: 5,
-  // audioVisualizerType: 'radial',
-  // audioVisualizerRadialBarCount: 24,
-  // audioVisualizerRadialRadius: 100,
-  // audioVisualizerType: 'grid',
-  // audioVisualizerGridRowCount: 25,
-  // audioVisualizerGridColumnCount: 25,
-  // audioVisualizerType: 'wave',
-  // audioVisualizerWaveLineWidth: 3,
-  // audioVisualizerType: 'aura',
+  // audio visualization configuration — calm teal "wave" fits a trust-first finance product
+  audioVisualizerType: 'wave',
+  audioVisualizerColor: '#0F766E',
+  audioVisualizerColorDark: '#2DD4BF',
+  audioVisualizerWaveLineWidth: 3,
 
   // agent dispatch configuration
   agentName: process.env.AGENT_NAME ?? undefined,

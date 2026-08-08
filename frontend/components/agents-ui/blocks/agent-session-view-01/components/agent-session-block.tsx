@@ -1,7 +1,10 @@
+
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Track } from 'livekit-client';
 import { AnimatePresence, type MotionProps, motion } from 'motion/react';
+import { toast as sonnerToast } from 'sonner';
 import { useAgent, useSessionContext, useSessionMessages } from '@livekit/components-react';
 import { AgentChatTranscript } from '@/components/agents-ui/agent-chat-transcript';
 import {
@@ -9,8 +12,36 @@ import {
   type AgentControlBarControls,
 } from '@/components/agents-ui/agent-control-bar';
 import { Shimmer } from '@/components/ai-elements/shimmer';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/shadcn/utils';
 import { TileLayout } from './tile-view';
+
+/** Human-readable label + description for each LiveKit agent lifecycle state. */
+const AGENT_STATE_COPY: Record<string, { label: string; hint: string }> = {
+  connecting: { label: 'Connecting…', hint: 'Joining the call, please wait' },
+  initializing: { label: 'Connecting…', hint: 'Setting things up, please wait' },
+  listening: { label: 'Listening to you', hint: 'Ava is listening' },
+  thinking: { label: 'Ava is thinking…', hint: 'One moment' },
+  speaking: { label: 'Ava is speaking', hint: 'Ava is replying' },
+};
+
+function toastAlert({
+  title,
+  description,
+}: {
+  title: React.ReactNode;
+  description?: React.ReactNode;
+}) {
+  return sonnerToast.custom(
+    (id) => (
+      <Alert onClick={() => sonnerToast.dismiss(id)} className="bg-accent w-full md:w-[364px]">
+        <AlertTitle>{title}</AlertTitle>
+        {description && <AlertDescription>{description}</AlertDescription>}
+      </Alert>
+    ),
+    { duration: 12_000 }
+  );
+}
 
 const MotionMessage = motion.create(Shimmer);
 
@@ -189,6 +220,26 @@ export function AgentSessionView_01({
     screenShare: supportsScreenShare,
   };
 
+  // Step 4: clearly surface microphone permission errors with instructions to fix them.
+  const handleDeviceError = useCallback(
+    ({ source, error }: { source: Track.Source; error: Error }) => {
+      if (source !== Track.Source.Microphone) return;
+
+      const isPermissionDenied =
+        error.name === 'NotAllowedError' || /permission/i.test(error.message);
+
+      toastAlert({
+        title: isPermissionDenied ? 'Microphone access blocked' : 'Microphone error',
+        description: isPermissionDenied
+          ? 'Ava needs your microphone to hear you. Click the lock/camera icon in your browser\u2019s address bar, allow microphone access, then start the call again.'
+          : `Ava couldn't access your microphone (${error.message}). Check that no other app is using it and try again.`,
+      });
+    },
+    []
+  );
+
+  const stateCopy = AGENT_STATE_COPY[agentState ?? ''];
+
   useEffect(() => {
     const lastMessage = messages.at(-1);
     const lastMessageIsLocal = lastMessage?.from?.isLocal === true;
@@ -241,6 +292,15 @@ export function AgentSessionView_01({
         {...BOTTOM_VIEW_MOTION_PROPS}
         className="absolute inset-x-3 bottom-0 z-50 md:inset-x-12"
       >
+        {/* Step 2 & 3: always-visible text label for the current agent state (Connecting / Listening / Speaking) */}
+        {stateCopy && (
+          <p
+            aria-live="polite"
+            className="text-foreground mx-auto block w-full max-w-2xl pb-2 text-center text-sm font-semibold"
+          >
+            {stateCopy.label}
+          </p>
+        )}
         {/* Pre-connect message */}
         {isPreConnectBufferEnabled && (
           <AnimatePresence>
@@ -266,9 +326,13 @@ export function AgentSessionView_01({
             isConnected={session.isConnected}
             onDisconnect={session.end}
             onIsChatOpenChange={setChatOpen}
+            onDeviceError={handleDeviceError}
           />
         </div>
       </motion.div>
     </section>
   );
 }
+
+
+
